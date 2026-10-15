@@ -1,0 +1,11 @@
+---
+- name: Déployer le serveur Minecraft
+  hosts: minecraft
+  become: true
+  roles:
+    - role: base
+      tags: [base]
+    - role: docker
+      tags: [docker]
+    - role: minecraft
+      tags: [minecraft]

@@ -1,0 +1,22 @@
+---
+# Utilisateur système qui possède les fichiers du serveur
+mc_user: minecraft
+mc_uid: 1500   # doit correspondre à PUID/PGID dans server/docker-compose.yml
+
+# Dossier de déploiement sur la machine
+mc_dir: /opt/minecraft
+
+# Port Minecraft ouvert dans le pare-feu (doit correspondre à server/docker-compose.yml)
+mc_port: 25565
+
+# Port SSH conservé ouvert dans le pare-feu
+ssh_port: 22
+
+# Utilisateur d'administration : seul compte autorisé en SSH (par clé uniquement)
+admin_user: basile
+
+# Clés SSH autorisées pour admin_user. Au choix (ou les deux) :
+# - ton nom d'utilisateur GitHub : Ansible récupère https://github.com/<user>.keys
+admin_github_user: "Basile-hltd"
+# - des clés publiques en clair (format "ssh-ed25519 AAAA... commentaire")
+admin_ssh_public_keys: []

@@ -1,0 +1,66 @@
+# Configuration du serveur Minecraft (LE fichier à éditer).
+# Doc des variables : https://docker-minecraft-server.readthedocs.io
+services:
+  mc:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"                  # accepte l'EULA Mojang
+
+      # --- RCON (le port 25575 n'est pas publié : accessible uniquement entre conteneurs) ---
+      # En local : "dev". Déployé par Ansible : mot de passe aléatoire lu dans .env.
+      # NE JAMAIS publier le port 25575 (voir README, section "Mot de passe RCON").
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "${RCON_PASSWORD:-dev}"
+      UID: "1500"                   # = mc_uid dans ansible/group_vars/all.yml
+      GID: "1500"
+      TZ: "Europe/Paris"
+
+      # --- Type et version ---
+      TYPE: "PAPER"                 # VANILLA, PAPER, FABRIC, FORGE, NEOFORGE...
+      VERSION: "LATEST"             # ou ex. "1.21.4"
+
+      # --- Ressources ---
+      MEMORY: "4G"
+
+      # --- Gameplay (server.properties) ---
+      MOTD: "Serveur Minecraft"
+      DIFFICULTY: "normal"
+      MODE: "survival"
+      MAX_PLAYERS: "10"
+      VIEW_DISTANCE: "10"
+      ENABLE_WHITELIST: "true"
+      ENFORCE_WHITELIST: "true"
+
+      # --- Joueurs (pseudos séparés par des virgules) ---
+      OPS: "TonPseudo"
+      WHITELIST: "TonPseudo,UnAmi"
+
+      # --- Plugins / mods (exemples, décommenter) ---
+      # MODRINTH_PROJECTS: "essentialsx,luckperms"
+    volumes:
+      - ./data:/data
+      - ./config:/config:ro         # fichiers copiés dans /data au démarrage
+
+  backup:
+    image: itzg/mc-backup:latest
+    container_name: minecraft-backup
+    restart: unless-stopped
+    depends_on:
+      - mc
+    environment:
+      UID: "1500"
+      GID: "1500"
+      BACKUP_INTERVAL: "6h"
+      PRUNE_BACKUPS_DAYS: "7"
+      INITIAL_DELAY: "5m"
+      RCON_HOST: mc
+      RCON_PASSWORD: "${RCON_PASSWORD:-dev}"
+    volumes:
+      - ./data:/data:ro
+      - ./backups:/backups

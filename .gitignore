@@ -1,0 +1,11 @@
+# Données locales (si tu testes le compose en local)
+server/data/
+server/backups/
+server/.env
+
+# Ansible
+*.retry
+.ansible/
+
+# Environnement Python
+.venv/

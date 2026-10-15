@@ -1,0 +1,9 @@
+---
+# Pour lancer Ansible depuis la machine cible elle-même (aucun SSH, aucun WSL).
+# Usage : python -m ansible.cli.playbook -i inventory/local.yml site.yml --ask-become-pass
+all:
+  children:
+    minecraft:
+      hosts:
+        localhost:
+          ansible_connection: local

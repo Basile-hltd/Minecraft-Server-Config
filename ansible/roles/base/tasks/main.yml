@@ -1,0 +1,97 @@
+---
+- name: Mettre à jour le cache apt et installer les paquets de base
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - rsync
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Créer le groupe du serveur Minecraft
+  ansible.builtin.group:
+    name: "{{ mc_user }}"
+    gid: "{{ mc_uid }}"
+    system: true
+
+- name: Créer l utilisateur du serveur Minecraft
+  ansible.builtin.user:
+    name: "{{ mc_user }}"
+    uid: "{{ mc_uid }}"
+    group: "{{ mc_user }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Pare-feu - politique entrante par défaut
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: Pare-feu - autoriser SSH
+  community.general.ufw:
+    rule: limit
+    port: "{{ ssh_port }}"
+    proto: tcp
+
+- name: Pare-feu - autoriser Minecraft
+  community.general.ufw:
+    rule: allow
+    port: "{{ mc_port }}"
+    proto: tcp
+
+- name: Pare-feu - activer
+  community.general.ufw:
+    state: enabled
+
+- name: Activer fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+- name: Créer le dossier de drop-ins logind
+  ansible.builtin.file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    mode: "0755"
+
+- name: Ne pas mettre en veille à la fermeture du capot (portable utilisé comme serveur)
+  ansible.builtin.copy:
+    dest: /etc/systemd/logind.conf.d/lid.conf
+    content: |
+      [Login]
+      HandleLidSwitch=ignore
+      HandleLidSwitchExternalPower=ignore
+      HandleLidSwitchDocked=ignore
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Redémarrer systemd-logind
+
+- name: Mises à jour de sécurité automatiques
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: sudo sans mot de passe pour {{ admin_user }}
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/90-{{ admin_user }}"
+    content: |
+      {{ admin_user }} ALL=(ALL) NOPASSWD:ALL
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Durcissement SSH
+  ansible.builtin.import_tasks: ssh.yml

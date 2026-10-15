@@ -1,0 +1,10 @@
+---
+- name: Redémarrer systemd-logind
+  ansible.builtin.service:
+    name: systemd-logind
+    state: restarted
+
+- name: Recharger sshd
+  ansible.builtin.service:
+    name: ssh
+    state: reloaded

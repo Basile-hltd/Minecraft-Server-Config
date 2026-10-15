@@ -1,0 +1,43 @@
+---
+# ORDRE IMPORTANT : on installe d'abord la clé, puis on coupe le mot de passe.
+- name: Vérifier qu'une clé est configurée (sinon on se verrouille dehors)
+  ansible.builtin.assert:
+    that:
+      - >-
+        (admin_github_user | length > 0) or
+        (admin_ssh_public_keys | length > 0 and
+         admin_ssh_public_keys | select('match', '^(ssh-|ecdsa-|sk-)') | list | length == admin_ssh_public_keys | length)
+    fail_msg: "Renseigne admin_github_user ou admin_ssh_public_keys dans ansible/group_vars/all.yml"
+
+- name: Installer les clés publiques GitHub de {{ admin_user }}
+  ansible.posix.authorized_key:
+    user: "{{ admin_user }}"
+    key: "https://github.com/{{ admin_github_user }}.keys"
+    state: present
+  when: admin_github_user | length > 0
+
+- name: Installer les clés publiques listées
+  ansible.posix.authorized_key:
+    user: "{{ admin_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ admin_ssh_public_keys }}"
+  when: admin_ssh_public_keys | length > 0
+
+- name: Durcir sshd (clé uniquement, pas de root, un seul utilisateur autorisé)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PubkeyAuthentication yes
+      AllowUsers {{ admin_user }}
+      MaxAuthTries 3
+      LoginGraceTime 30
+      X11Forwarding no
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Recharger sshd

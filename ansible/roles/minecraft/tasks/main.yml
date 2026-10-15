@@ -1,0 +1,59 @@
+---
+- name: Créer le dossier de déploiement
+  ansible.builtin.file:
+    path: "{{ mc_dir }}"
+    state: directory
+    owner: "{{ mc_user }}"
+    group: "{{ mc_user }}"
+    mode: "0755"
+
+- name: Copier docker-compose.yml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../server/docker-compose.yml"
+    dest: "{{ mc_dir }}/docker-compose.yml"
+    owner: "{{ mc_user }}"
+    group: "{{ mc_user }}"
+    mode: "0644"
+
+- name: Vérifier si .env existe déjà
+  ansible.builtin.stat:
+    path: "{{ mc_dir }}/.env"
+  register: mc_env_stat
+
+- name: Générer .env (mot de passe RCON aléatoire, créé une seule fois sur la machine)
+  ansible.builtin.copy:
+    dest: "{{ mc_dir }}/.env"
+    content: |
+      RCON_PASSWORD={{ lookup('ansible.builtin.password', '/dev/null length=32 chars=ascii_letters,digits') }}
+    owner: "{{ mc_user }}"
+    group: "{{ mc_user }}"
+    mode: "0600"
+  when: not mc_env_stat.stat.exists
+  no_log: true
+
+- name: Synchroniser le dossier config/
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../server/config/"
+    dest: "{{ mc_dir }}/config/"
+    recursive: true
+    delete: true
+    rsync_opts:
+      - "--chown={{ mc_user }}:{{ mc_user }}"
+      - "--exclude=.gitkeep"
+
+- name: Créer les dossiers de données et de sauvegardes
+  ansible.builtin.file:
+    path: "{{ mc_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ mc_user }}"
+    group: "{{ mc_user }}"
+    mode: "0755"
+  loop:
+    - data
+    - backups
+
+- name: Lancer le serveur Minecraft
+  community.docker.docker_compose_v2:
+    project_src: "{{ mc_dir }}"
+    state: present
+    pull: missing
