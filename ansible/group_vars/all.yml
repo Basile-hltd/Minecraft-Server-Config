@@ -8,8 +8,7 @@ mc_dir: /opt/minecraft
 
 # --- Versions (SEUL endroit à modifier) ---
 # Version de Minecraft/Paper du serveur. Le jar du plugin Isohypse correspondant est choisi
-# d'après sa version majeure.mineure (26.1.2 -> isohypse-...-minecraft-26.1.jar).
-mc_version: "26.1.2"
+mc_version: "26.3"
 # Version du plugin Isohypse (tag de release de Basile-hltd/Minecraft-isohypse, sans le "v").
 isohypse_version: "0.0.1"
 # Dérivé de mc_version : ne pas modifier.
