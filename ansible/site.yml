@@ -1,4 +1,24 @@
 ---
+# Ubuntu 25.10+ : `sudo` est sudo-rs, dont le prompt n'est pas reconnu par Ansible
+# (timeout "waiting for privilege escalation prompt"). Si le sudo classique (`sudo.ws`)
+# est présent, on l'utilise ; sinon on garde `sudo`.
+- name: Détecter le binaire sudo compatible
+  hosts: minecraft
+  gather_facts: false
+  become: false
+  tags: [always]
+  tasks:
+    - name: Chercher sudo.ws
+      ansible.builtin.raw: command -v sudo.ws || true
+      register: sudo_ws
+      changed_when: false
+      check_mode: false
+
+    - name: Utiliser sudo.ws pour l'élévation de privilèges
+      ansible.builtin.set_fact:
+        ansible_become_exe: sudo.ws
+      when: "'sudo.ws' in sudo_ws.stdout"
+
 - name: Déployer le serveur Minecraft
   hosts: minecraft
   become: true

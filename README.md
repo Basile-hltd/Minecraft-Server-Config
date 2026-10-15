@@ -64,10 +64,10 @@ Les commandes suivantes se lancent depuis le dossier `ansible/`, avec le venv ac
 
 ## 3. Déployer
 
-Vérifier que la machine répond :
+Vérifier que la machine répond (SSH + Python, sans `sudo`) :
 
 ```bash
-python -m ansible.cli.adhoc minecraft -m ping
+python -m ansible.cli.adhoc minecraft -m ping -e ansible_become=false
 ```
 
 Simuler (ne modifie rien ; les tâches dépendant de Docker peuvent échouer en simulation, c'est normal) :
@@ -90,6 +90,19 @@ Pour ne redéployer que la config du serveur :
 
 ```bash
 python -m ansible.cli.playbook site.yml --tags minecraft
+```
+
+### Dépannage : `sudo-rs` (Ubuntu 25.10 et 26.04)
+
+Depuis Ubuntu 25.10, `sudo` est remplacé par `sudo-rs`. Son prompt n'est pas reconnu par Ansible, ce qui donne
+`Timeout (12s) waiting for privilege escalation prompt` (ou `sudo: interactive authentication is required`
+si aucun mot de passe n'est fourni). Le playbook détecte automatiquement `sudo.ws` (le `sudo` classique, fourni
+en parallèle) et l'utilise. Aucune action n'est nécessaire pour `site.yml`.
+
+Pour une commande ad-hoc (hors playbook) sur une telle machine, ajouter `-e ansible_become_exe=sudo.ws` :
+
+```bash
+python -m ansible.cli.adhoc minecraft -m ping --ask-become-pass -e ansible_become_exe=sudo.ws
 ```
 
 ### Depuis la machine cible elle-même
