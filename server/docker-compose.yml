@@ -23,7 +23,8 @@ services:
 
       # --- Type et version ---
       TYPE: "PAPER"                 # VANILLA, PAPER, FABRIC, FORGE, NEOFORGE...
-      VERSION: "LATEST"             # ou ex. "1.21.4"
+      # Versions : définies dans ansible/group_vars/all.yml, écrites dans .env par Ansible.
+      VERSION: "${MC_VERSION:?MC_VERSION manquant, voir README}"
 
       # --- Ressources ---
       MEMORY: "8G"
@@ -41,7 +42,11 @@ services:
       OPS: "Japrisot"
       WHITELIST: "Japrisot"
 
-      # --- Plugins / mods (exemples, décommenter) ---
+      # --- Plugins / mods ---
+      # Supprime les anciens jars de plugins avant de télécharger ceux listés ici
+      # (évite d'avoir deux versions d'Isohypse). Attention : supprime aussi les jars ajoutés à la main.
+      REMOVE_OLD_MODS: "true"
+      PLUGINS: "https://github.com/Basile-hltd/Minecraft-isohypse/releases/download/v${ISOHYPSE_VERSION:?ISOHYPSE_VERSION manquant, voir README}/isohypse-${ISOHYPSE_VERSION}-minecraft-${MC_LINE:?MC_LINE manquant, voir README}.jar"
       # MODRINTH_PROJECTS: "essentialsx,luckperms"
     volumes:
       - ./data:/data

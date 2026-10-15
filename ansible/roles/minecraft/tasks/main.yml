@@ -31,6 +31,16 @@
   when: not mc_env_stat.stat.exists
   no_log: true
 
+- name: Écrire les versions dans .env (lues par docker-compose.yml)
+  ansible.builtin.lineinfile:
+    path: "{{ mc_dir }}/.env"
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: MC_VERSION, value: "{{ mc_version }}" }
+    - { key: MC_LINE, value: "{{ mc_line }}" }
+    - { key: ISOHYPSE_VERSION, value: "{{ isohypse_version }}" }
+
 - name: Synchroniser le dossier config/
   ansible.posix.synchronize:
     src: "{{ playbook_dir }}/../server/config/"

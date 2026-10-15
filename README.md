@@ -59,8 +59,25 @@ Les commandes suivantes se lancent depuis le dossier `ansible/`, avec le venv ac
 | Fichier | À régler |
 |---|---|
 | `ansible/inventory/hosts.yml` | `ansible_host` : IP ou nom de la machine ; `ansible_user` |
-| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) |
-| `server/docker-compose.yml` | `VERSION`, `MEMORY`, `MOTD`, `OPS`, `WHITELIST`, `DIFFICULTY`... |
+| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) ; **`mc_version` et `isohypse_version`** (versions du serveur et du plugin, seul endroit à modifier) |
+| `server/docker-compose.yml` | `MEMORY`, `MOTD`, `OPS`, `WHITELIST`, `DIFFICULTY`... |
+
+## Versions de Minecraft et du plugin Isohypse
+
+Les deux versions se changent à **un seul endroit** : `ansible/group_vars/all.yml`.
+
+```yaml
+mc_version: "26.1.2"        # version de Minecraft/Paper du serveur
+isohypse_version: "0.0.1"   # version du plugin (tag v... sur Basile-hltd/Minecraft-isohypse)
+```
+
+Au déploiement, Ansible les écrit dans `/opt/minecraft/.env`, et `server/docker-compose.yml` s'en sert pour
+la version de Paper et pour télécharger le jar `isohypse-<isohypse_version>-minecraft-<majeure.mineure>.jar`
+depuis les releases GitHub du plugin (26.1.2 -> jar `minecraft-26.1`). Pour mettre à jour :
+modifier ces valeurs, puis `python -m ansible.cli.playbook site.yml --tags minecraft`.
+La release du plugin doit déjà exister avec le jar de la ligne de version voulue.
+
+`REMOVE_OLD_MODS` est activé : les jars de `plugins/` absents de `PLUGINS` sont supprimés au démarrage.
 
 ## 3. Déployer
 
@@ -136,6 +153,7 @@ Les sauvegardes sont dans `/opt/minecraft/backups` (toutes les 6 h, 7 jours cons
 
 ```bash
 cd server
+printf 'MC_VERSION=26.1.2\nMC_LINE=26.1\nISOHYPSE_VERSION=0.0.1\n' > .env   # mêmes valeurs que group_vars/all.yml
 docker compose up -d mc       # seulement le serveur, sans le service de sauvegarde
 docker compose logs -f mc     # attendre "Done", puis se connecter sur localhost
 docker compose down

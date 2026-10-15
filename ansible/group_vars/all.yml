@@ -6,6 +6,15 @@ mc_uid: 1500   # doit correspondre à PUID/PGID dans server/docker-compose.yml
 # Dossier de déploiement sur la machine
 mc_dir: /opt/minecraft
 
+# --- Versions (SEUL endroit à modifier) ---
+# Version de Minecraft/Paper du serveur. Le jar du plugin Isohypse correspondant est choisi
+# d'après sa version majeure.mineure (26.1.2 -> isohypse-...-minecraft-26.1.jar).
+mc_version: "26.1.2"
+# Version du plugin Isohypse (tag de release de Basile-hltd/Minecraft-isohypse, sans le "v").
+isohypse_version: "0.0.1"
+# Dérivé de mc_version : ne pas modifier.
+mc_line: "{{ mc_version.split('.')[:2] | join('.') }}"
+
 # Port Minecraft ouvert dans le pare-feu (doit correspondre à server/docker-compose.yml)
 mc_port: 25565
 
