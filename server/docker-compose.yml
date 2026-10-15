@@ -26,20 +26,20 @@ services:
       VERSION: "LATEST"             # ou ex. "1.21.4"
 
       # --- Ressources ---
-      MEMORY: "4G"
+      MEMORY: "8G"
 
       # --- Gameplay (server.properties) ---
       MOTD: "Serveur Minecraft"
       DIFFICULTY: "normal"
       MODE: "survival"
-      MAX_PLAYERS: "10"
-      VIEW_DISTANCE: "10"
+      MAX_PLAYERS: "20"
+      VIEW_DISTANCE: "12"
       ENABLE_WHITELIST: "true"
       ENFORCE_WHITELIST: "true"
 
       # --- Joueurs (pseudos séparés par des virgules) ---
-      OPS: "TonPseudo"
-      WHITELIST: "TonPseudo,UnAmi"
+      OPS: "Japrisot"
+      WHITELIST: "Japrisot"
 
       # --- Plugins / mods (exemples, décommenter) ---
       # MODRINTH_PROJECTS: "essentialsx,luckperms"

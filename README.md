@@ -82,7 +82,8 @@ Déployer :
 python -m ansible.cli.playbook site.yml --ask-become-pass
 ```
 
-`--ask-become-pass` demande le mot de passe `sudo` de la machine. Après le premier déploiement,
+`--ask-become-pass` demande le mot de passe `sudo` de **la machine cible (le serveur Minecraft)**, pour l'utilisateur
+`admin_user` : c'est le mot de passe que tu tapes sur le serveur quand tu fais `sudo`, pas celui de ton poste de contrôle. Après le premier déploiement,
 `sudo` est sans mot de passe pour `admin_user` et ce flag n'est plus nécessaire.
 
 Le déploiement est idempotent : relance la même commande après chaque modification de config.
@@ -119,10 +120,10 @@ Sur la machine (`ssh basile@IP`) :
 
 ```bash
 cd /opt/minecraft
-docker compose ps                  # état des conteneurs
-docker compose logs -f mc          # logs (attendre la ligne "Done" au premier démarrage)
-docker compose exec mc rcon-cli    # console Minecraft
-docker compose restart mc          # redémarrer le serveur
+sudo docker compose ps                  # état des conteneurs
+sudo docker compose logs -f mc          # logs (attendre la ligne "Done" au premier démarrage)
+sudo docker compose exec mc rcon-cli    # console Minecraft
+sudo docker compose restart mc          # redémarrer le serveur
 ```
 
 Dans Minecraft Java : Multijoueur → Ajouter un serveur → IP de la machine.
