@@ -7,10 +7,14 @@ mc_uid: 1500   # doit correspondre à PUID/PGID dans server/docker-compose.yml
 mc_dir: /opt/minecraft
 
 # --- Versions (SEUL endroit à modifier) ---
-# Version de Minecraft/Paper du serveur. Le jar du plugin Isohypse correspondant est choisi
+# Version de Minecraft/Paper du serveur. Le jar de chaque plugin est choisi d'après elle :
+# Isohypse d'après sa version majeure.mineure (26.3 -> isohypse-...-minecraft-26.3.jar),
+# LOD Server Support d'après la version exacte (version Modrinth v<lss_version>+paper+mc<mc_version>).
 mc_version: "26.3"
 # Version du plugin Isohypse (tag de release de Basile-hltd/Minecraft-isohypse, sans le "v").
-isohypse_version: "0.0.1"
+isohypse_version: "0.2.0"
+# Version du plugin LOD Server Support (https://modrinth.com/plugin/lod-server-support, sans le "v").
+lss_version: "0.20.0"
 # Dérivé de mc_version : ne pas modifier.
 mc_line: "{{ mc_version.split('.')[:2] | join('.') }}"
 

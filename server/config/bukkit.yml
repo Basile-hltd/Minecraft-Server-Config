@@ -1,0 +1,5 @@
+# Copié dans /data/bukkit.yml à chaque démarrage ; Paper complète le reste avec ses valeurs par défaut.
+# Le monde principal utilise le générateur du plugin Isohypse (style choisi par LEVEL_TYPE dans docker-compose.yml).
+worlds:
+  world:
+    generator: Isohypse

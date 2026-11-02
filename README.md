@@ -22,7 +22,10 @@ ansible/
   roles/minecraft          Copie de server/ sur la machine + docker compose up
 server/
   docker-compose.yml       Config du serveur : version, RAM, gameplay, joueurs, plugins, sauvegardes
-  config/                  Fichiers copiés dans /data (configs de plugins...)
+  config/                  Copié à la racine de /data à chaque démarrage :
+    bukkit.yml               active le générateur Isohypse sur le monde principal
+    plugins/Isohypse/config.yml                     réglages d'Isohypse
+    plugins/LodServerSupport/lss-server-config.yaml réglages de LOD Server Support
 requirements.txt           Dépendances Python (ansible-core)
 ```
 
@@ -59,25 +62,69 @@ Les commandes suivantes se lancent depuis le dossier `ansible/`, avec le venv ac
 | Fichier | À régler |
 |---|---|
 | `ansible/inventory/hosts.yml` | `ansible_host` : IP ou nom de la machine ; `ansible_user` |
-| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) ; **`mc_version` et `isohypse_version`** (versions du serveur et du plugin, seul endroit à modifier) |
-| `server/docker-compose.yml` | `MEMORY`, `MOTD`, `OPS`, `WHITELIST`, `DIFFICULTY`... |
+| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) ; **`mc_version`, `isohypse_version` et `lss_version`** (versions du serveur et des plugins, seul endroit à modifier) |
+| `server/docker-compose.yml` | `MEMORY`, `MOTD`, `OPS`, `WHITELIST`, `DIFFICULTY`, `LEVEL_TYPE`... |
+| `server/config/` | Réglages des plugins (voir [Réglages des plugins](#réglages-des-plugins)) |
 
-## Versions de Minecraft et du plugin Isohypse
+## Versions de Minecraft et des plugins
 
-Les deux versions se changent à **un seul endroit** : `ansible/group_vars/all.yml`.
+Les versions se changent à **un seul endroit** : `ansible/group_vars/all.yml`.
 
 ```yaml
-mc_version: "26.1.2"        # version de Minecraft/Paper du serveur
-isohypse_version: "0.0.1"   # version du plugin (tag v... sur Basile-hltd/Minecraft-isohypse)
+mc_version: "26.3"          # version de Minecraft/Paper du serveur
+isohypse_version: "0.2.0"   # plugin Isohypse (tag v... sur Basile-hltd/Minecraft-isohypse)
+lss_version: "0.20.0"       # plugin LOD Server Support (Modrinth)
 ```
 
-Au déploiement, Ansible les écrit dans `/opt/minecraft/.env`, et `server/docker-compose.yml` s'en sert pour
-la version de Paper et pour télécharger le jar `isohypse-<isohypse_version>-minecraft-<majeure.mineure>.jar`
-depuis les releases GitHub du plugin (26.1.2 -> jar `minecraft-26.1`). Pour mettre à jour :
-modifier ces valeurs, puis `python -m ansible.cli.playbook site.yml --tags minecraft`.
-La release du plugin doit déjà exister avec le jar de la ligne de version voulue.
+Au déploiement, Ansible les écrit dans `/opt/minecraft/.env`, et `server/docker-compose.yml` s'en sert pour :
 
-`REMOVE_OLD_MODS` est activé : les jars de `plugins/` absents de `PLUGINS` sont supprimés au démarrage.
+- la version de Paper ;
+- **Isohypse** : le jar `isohypse-<isohypse_version>-minecraft-<majeure.mineure>.jar` des releases GitHub du plugin
+  (26.3 -> `minecraft-26.3`, 26.1.2 -> `minecraft-26.1`) ;
+- **LOD Server Support** : la version Modrinth `v<lss_version>+paper+mc<mc_version>` (version exacte de Minecraft).
+
+Pour mettre à jour : modifier ces valeurs, puis `python -m ansible.cli.playbook site.yml --tags minecraft`.
+Chaque plugin doit déjà avoir publié un jar pour la version de Minecraft voulue
+([releases Isohypse](https://github.com/Basile-hltd/Minecraft-isohypse/releases),
+[versions LSS](https://modrinth.com/plugin/lod-server-support/versions)).
+
+`REMOVE_OLD_MODS` est activé : les jars de `plugins/` absents de `PLUGINS` et `MODRINTH_PROJECTS` sont supprimés au démarrage.
+
+## Réglages des plugins
+
+Les réglages sont dans `server/config/`, dont l'arborescence reproduit celle de `/data`. Au démarrage du conteneur,
+tout son contenu est copié à la racine de `/data` et **écrase** les fichiers du serveur
+(`COPY_CONFIG_DEST=/data`, `SYNC_SKIP_NEWER_IN_DESTINATION=false`) : c'est le dépôt qui fait foi, une modification
+faite à la main sur le serveur est perdue au redémarrage suivant.
+
+| Fichier | Rôle |
+|---|---|
+| `server/config/bukkit.yml` | `generator: Isohypse` pour le monde principal (Paper complète le reste) |
+| `server/config/plugins/Isohypse/config.yml` | Lieu réel (latitude, longitude, taille), hauteur du monde, zones, structures. Doc : [README d'Isohypse](https://github.com/Basile-hltd/Minecraft-isohypse#configuration) |
+| `server/config/plugins/LodServerSupport/lss-server-config.yaml` | Distance des LOD, génération, bande passante, disque, confidentialité. Fichier complet, commenté par le plugin |
+| `LEVEL_TYPE` dans `server/docker-compose.yml` | Style de génération d'Isohypse : `Vanilla+`, `Realistic` ou `Fairy` |
+
+Les valeurs de départ viennent de `tools/server/` du dépôt Isohypse (v0.2.0) : `config.yml` tel quel,
+`lss.yml` appliqué au fichier par défaut de LSS 0.20.0 (`reader_threads` et `max_concurrent_reads` à 8),
+et `level-type=Realistic` de son `server.properties` (ses autres clés sont propres au serveur de test).
+
+Pour appliquer un changement : modifier le fichier, puis `python -m ansible.cli.playbook site.yml --tags minecraft`
+et redémarrer le serveur (`sudo docker compose restart mc` dans `/opt/minecraft` ; Ansible ne redémarre le conteneur
+que si `docker-compose.yml` ou `.env` changent).
+
+**Monde neuf obligatoire pour Isohypse.** Le générateur, `LEVEL_TYPE` et `world.max_height` ne s'appliquent qu'à un
+monde qui n'existe pas encore. Sur un monde déjà généré, seuls les nouveaux chunks utilisent Isohypse, avec des
+raccords visibles. Pour repartir de zéro, arrêter le serveur et supprimer `world`, `world_nether` et `world_the_end`
+dans `/opt/minecraft/data` (les sauvegardes restent dans `/opt/minecraft/backups`).
+
+Avec `Realistic`, le premier démarrage télécharge les altitudes réelles de la zone (plusieurs Go pour 50 km de côté,
+supprimés ensuite) : le serveur attend la fin avant d'ouvrir. Changer la zone, `world.max_height` ou
+`realistic.scale.*` relance ce téléchargement.
+
+**LOD Server Support** envoie le terrain lointain aux joueurs qui ont un mod client compatible
+([Voxy](https://modrinth.com/mod/voxy) ou [Distant Horizons](https://modrinth.com/mod/distanthorizons)) ;
+les autres jouent normalement. Après une modification de son fichier, `/lsslod reload` dans la console applique
+les réglages qui ne sont pas marqués `[restart]`.
 
 ## 3. Déployer
 
@@ -153,7 +200,7 @@ Les sauvegardes sont dans `/opt/minecraft/backups` (toutes les 6 h, 7 jours cons
 
 ```bash
 cd server
-printf 'MC_VERSION=26.1.2\nMC_LINE=26.1\nISOHYPSE_VERSION=0.0.1\n' > .env   # mêmes valeurs que group_vars/all.yml
+printf 'MC_VERSION=26.3\nMC_LINE=26.3\nISOHYPSE_VERSION=0.2.0\nLSS_VERSION=0.20.0\n' > .env   # mêmes valeurs que group_vars/all.yml
 docker compose up -d mc       # seulement le serveur, sans le service de sauvegarde
 docker compose logs -f mc     # attendre "Done", puis se connecter sur localhost
 docker compose down
