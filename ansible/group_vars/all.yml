@@ -15,8 +15,6 @@ mc_version: "26.3"
 isohypse_version: "0.2.2"
 # Version du plugin LOD Server Support (https://modrinth.com/plugin/lod-server-support, sans le "v").
 lss_version: "0.20.0"
-# Version du plugin Orebfuscator, anti-xray (https://modrinth.com/plugin/orebfuscator, numéro de version Modrinth).
-orebfuscator_version: "5.6.2"
 # Dérivé de mc_version : ne pas modifier.
 mc_line: "{{ mc_version.split('.')[:2] | join('.') }}"
 

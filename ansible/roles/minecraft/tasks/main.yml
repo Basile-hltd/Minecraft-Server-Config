@@ -42,7 +42,6 @@
     - { key: MC_LINE, value: "{{ mc_line }}" }
     - { key: ISOHYPSE_VERSION, value: "{{ isohypse_version }}" }
     - { key: LSS_VERSION, value: "{{ lss_version }}" }
-    - { key: OREBFUSCATOR_VERSION, value: "{{ orebfuscator_version }}" }
     - { key: WEB_HOSTNAME, value: "{{ web_hostname }}" }
 
 - name: Lire .env
