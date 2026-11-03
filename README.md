@@ -62,7 +62,7 @@ Les commandes suivantes se lancent depuis le dossier `ansible/`, avec le venv ac
 | Fichier | À régler |
 |---|---|
 | `ansible/inventory/hosts.yml` | `ansible_host` : IP ou nom de la machine ; `ansible_user` |
-| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) ; **`mc_version`, `isohypse_version` et `lss_version`** (versions du serveur et des plugins, seul endroit à modifier) |
+| `ansible/group_vars/all.yml` | `admin_user`, `admin_github_user` (ou `admin_ssh_public_keys`) ; **`mc_version`, `isohypse_version`, `lss_version` et `orebfuscator_version`** (versions du serveur et des plugins, seul endroit à modifier) |
 | `server/docker-compose.yml` | `MEMORY`, `MOTD`, `OPS`, `WHITELIST`, `DIFFICULTY`, `LEVEL_TYPE`... |
 | `server/config/` | Réglages des plugins (voir [Réglages des plugins](#réglages-des-plugins)) |
 
@@ -74,6 +74,7 @@ Les versions se changent à **un seul endroit** : `ansible/group_vars/all.yml`.
 mc_version: "26.3"          # version de Minecraft/Paper du serveur
 isohypse_version: "0.2.2"   # plugin Isohypse (tag v... sur Basile-hltd/Minecraft-isohypse)
 lss_version: "0.20.0"       # plugin LOD Server Support (Modrinth)
+orebfuscator_version: "5.6.2"   # plugin Orebfuscator, anti-xray (Modrinth)
 ```
 
 Au déploiement, Ansible les écrit dans `/opt/minecraft/.env`, et `server/docker-compose.yml` s'en sert pour :
@@ -81,12 +82,16 @@ Au déploiement, Ansible les écrit dans `/opt/minecraft/.env`, et `server/docke
 - la version de Paper ;
 - **Isohypse** : le jar `isohypse-<isohypse_version>-minecraft-<majeure.mineure>.jar` des releases GitHub du plugin
   (26.3 -> `minecraft-26.3`, 26.1.2 -> `minecraft-26.1`) ;
-- **LOD Server Support** : la version Modrinth `v<lss_version>+paper+mc<mc_version>` (version exacte de Minecraft).
+- **LOD Server Support** : la version Modrinth `v<lss_version>+paper+mc<mc_version>` (version exacte de Minecraft) ;
+- **Orebfuscator** (anti-xray) : la version Modrinth `<orebfuscator_version>`, avec ses réglages par défaut (mode 2 : les minerais cachés
+  sont mêlés à de faux minerais). Son dossier `plugins/Orebfuscator/` est créé au premier lancement ; pour le régler, ajouter
+  ses fichiers dans `server/config/plugins/Orebfuscator/`.
 
 Pour mettre à jour : modifier ces valeurs, puis `python -m ansible.cli.playbook site.yml --tags minecraft`.
 Chaque plugin doit déjà avoir publié un jar pour la version de Minecraft voulue
 ([releases Isohypse](https://github.com/Basile-hltd/Minecraft-isohypse/releases),
-[versions LSS](https://modrinth.com/plugin/lod-server-support/versions)).
+[versions LSS](https://modrinth.com/plugin/lod-server-support/versions),
+[versions Orebfuscator](https://modrinth.com/plugin/orebfuscator/versions)).
 
 `REMOVE_OLD_MODS` est activé : les jars de `plugins/` absents de `PLUGINS` et `MODRINTH_PROJECTS` sont supprimés au démarrage.
 
@@ -200,7 +205,8 @@ Les sauvegardes sont dans `/opt/minecraft/backups` (toutes les 6 h, 7 jours cons
 
 ```bash
 cd server
-printf 'MC_VERSION=26.3\nMC_LINE=26.3\nISOHYPSE_VERSION=0.2.2\nLSS_VERSION=0.20.0\n' > .env   # mêmes valeurs que group_vars/all.yml
+printf 'MC_VERSION=26.3\nMC_LINE=26.3\nISOHYPSE_VERSION=0.2.2\nLSS_VERSION=0.20.0\nOREBFUSCATOR_VERSION=5.6.2
+' > .env   # mêmes valeurs que group_vars/all.yml
 docker compose up -d mc       # seulement le serveur, sans le service de sauvegarde
 docker compose logs -f mc     # attendre "Done", puis se connecter sur localhost
 docker compose down

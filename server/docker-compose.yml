@@ -32,13 +32,14 @@ services:
       LEVEL_TYPE: "Realistic"
 
       # --- Ressources ---
-      MEMORY: "8G"
+      MEMORY: "10G"
 
       # --- Gameplay (server.properties) ---
       MOTD: "Serveur Minecraft"
-      DIFFICULTY: "normal"
+      DIFFICULTY: "hard"
       MODE: "survival"
       MAX_PLAYERS: "20"
+      SPAWN_PROTECTION: "0"         # pas de zone protégée autour du spawn
       VIEW_DISTANCE: "12"
       ENABLE_WHITELIST: "true"
       ENFORCE_WHITELIST: "true"
@@ -53,8 +54,9 @@ services:
       REMOVE_OLD_MODS: "true"
       # Isohypse, depuis les releases GitHub du plugin.
       PLUGINS: "https://github.com/Basile-hltd/Minecraft-isohypse/releases/download/v${ISOHYPSE_VERSION:?ISOHYPSE_VERSION manquant, voir README}/isohypse-${ISOHYPSE_VERSION}-minecraft-${MC_LINE:?MC_LINE manquant, voir README}.jar"
-      # LOD Server Support, depuis Modrinth (slug:numéro de version ; autres plugins à ajouter après une virgule).
-      MODRINTH_PROJECTS: "lod-server-support:v${LSS_VERSION:?LSS_VERSION manquant, voir README}+paper+mc${MC_VERSION}"
+      # Plugins depuis Modrinth (slug:numéro de version, séparés par des virgules) :
+      # LOD Server Support, et Orebfuscator (anti-xray, réglages par défaut du plugin).
+      MODRINTH_PROJECTS: "lod-server-support:v${LSS_VERSION:?LSS_VERSION manquant, voir README}+paper+mc${MC_VERSION},orebfuscator:${OREBFUSCATOR_VERSION:?OREBFUSCATOR_VERSION manquant, voir README}"
 
       # --- Fichiers de config (bukkit.yml, configs des plugins) ---
       # config/ est copié à la racine de /data à chaque démarrage et écrase les fichiers du serveur :
