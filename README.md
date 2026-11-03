@@ -26,6 +26,8 @@ server/
     bukkit.yml               active le générateur Isohypse sur le monde principal
     plugins/Isohypse/config.yml                     réglages d'Isohypse
     plugins/LodServerSupport/lss-server-config.yaml réglages de LOD Server Support
+  whitelist/               Page web d'ajout à la whitelist (copiée dans /opt/minecraft/whitelist) :
+    app.py                   script Python (RCON), index.html la page, Caddyfile le HTTPS
 requirements.txt           Dépendances Python (ansible-core)
 ```
 
@@ -198,6 +200,27 @@ sudo docker compose restart mc          # redémarrer le serveur
 Dans Minecraft Java : Multijoueur → Ajouter un serveur → IP de la machine.
 Pour jouer depuis Internet, rediriger le port TCP **25565** de la box vers la machine.
 
+### Whitelist web
+
+Les amis ajoutent eux-mêmes leur pseudo sur `https://<web_hostname>` (`web_hostname` dans `group_vars/all.yml`).
+
+- Rediriger les ports TCP **80 et 443** de la box vers la machine : Caddy en a besoin pour obtenir son certificat Let's Encrypt
+  (il le renouvelle seul, et le garde dans le volume `caddy_data`).
+- Le mot de passe, unique et aléatoire (12 caractères), est écrit dans `/opt/minecraft/.env` au premier déploiement.
+  Pour le lire et le donner aux amis :
+
+```bash
+sudo grep WHITELIST_PASSWORD /opt/minecraft/.env
+```
+
+La page est publique, mais sans le mot de passe elle ne fait rien. Il n'y a ni session ni cookie : le mot de passe est
+renvoyé et vérifié à chaque envoi, et recharger la page l'efface. Le script ne sait faire qu'une chose, `whitelist add <pseudo>`
+(en RCON, sur le réseau interne), après avoir vérifié que le pseudo fait 3 à 16 caractères parmi `A-Za-z0-9_`.
+Après 5 mots de passe faux en 10 minutes, l'IP est bloquée le temps de la fenêtre. Les ajouts sont gardés au redémarrage
+(`EXISTING_WHITELIST_FILE: MERGE`). Le service refuse de démarrer sans mot de passe d'au moins 12 caractères (pas de valeur par défaut) : en local, ajouter
+`WHITELIST_PASSWORD=...` dans `server/.env`. Pour changer le mot de passe : modifier la ligne dans `.env`, puis
+`sudo docker compose up -d whitelist`. Les ajouts sont visibles avec `sudo docker compose logs whitelist`.
+
 Les données (monde, plugins) sont dans `/opt/minecraft/data`.
 Les sauvegardes sont dans `/opt/minecraft/backups` (toutes les 6 h, 7 jours conservés).
 
@@ -221,7 +244,7 @@ Appliqué par le rôle `base` :
 - **SSH** : seul `admin_user` peut se connecter, par clé uniquement (pas de mot de passe, pas de root).
   Les clés viennent de `https://github.com/<admin_github_user>.keys` et/ou de `admin_ssh_public_keys`.
   Le playbook refuse de s'exécuter si aucune clé n'est configurée, pour ne pas te verrouiller dehors.
-- **Pare-feu (ufw)** : tout est fermé en entrée sauf SSH (limité en débit) et le port Minecraft.
+- **Pare-feu (ufw)** : tout est fermé en entrée sauf SSH (limité en débit), le port Minecraft et les ports 80/443 de la page de whitelist.
 - **fail2ban** et **mises à jour de sécurité automatiques** activés.
 - **sudo sans mot de passe** pour `admin_user` : protège ta clé privée avec une passphrase.
 - **Veille du capot désactivée** (utile si la machine est un portable).

@@ -20,6 +20,9 @@ orebfuscator_version: "5.6.2"
 # Dérivé de mc_version : ne pas modifier.
 mc_line: "{{ mc_version.split('.')[:2] | join('.') }}"
 
+# Nom d'hôte public de la page de whitelist (Caddy y obtient son certificat HTTPS). Ports 80 et 443 à rediriger sur la box.
+web_hostname: "hiltpold.internet-box.ch"
+
 # Port Minecraft ouvert dans le pare-feu (doit correspondre à server/docker-compose.yml)
 mc_port: 25565
 

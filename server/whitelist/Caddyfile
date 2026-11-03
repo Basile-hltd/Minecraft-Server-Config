@@ -1,0 +1,13 @@
+# HTTPS automatique (Let's Encrypt) pour le nom d'hôte de .env (WEB_HOSTNAME). Les ports 80 et 443 doivent être joignables depuis Internet.
+{$WEB_HOSTNAME} {
+	request_body {
+		max_size 2KB
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Content-Security-Policy "default-src 'none'; connect-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+	}
+	reverse_proxy whitelist:8080
+}

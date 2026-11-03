@@ -47,6 +47,8 @@ services:
       # --- Joueurs (pseudos séparés par des virgules) ---
       OPS: "Japrisot"
       WHITELIST: "Japrisot"
+      # Garde les pseudos ajoutés depuis la page web (sinon la liste serait réécrite au démarrage).
+      EXISTING_WHITELIST_FILE: "MERGE"
 
       # --- Plugins / mods ---
       # Supprime les anciens jars de plugins avant de télécharger ceux listés ici
@@ -67,6 +69,39 @@ services:
       - ./data:/data
       - ./config:/config:ro         # copié dans /data au démarrage (COPY_CONFIG_DEST)
 
+  # Page web pour ajouter un pseudo à la whitelist (voir README, section "Whitelist web").
+  # Le script parle à Minecraft par RCON, sur le réseau interne : le port 25575 n'est toujours pas publié.
+  whitelist:
+    image: python:3-alpine
+    container_name: minecraft-whitelist
+    restart: unless-stopped
+    depends_on:
+      - mc
+    user: "1500:1500"
+    command: ["python", "-u", "/app/app.py"]
+    environment:
+      RCON_HOST: mc
+      RCON_PASSWORD: "${RCON_PASSWORD:-dev}"
+      WHITELIST_PASSWORD: "${WHITELIST_PASSWORD:?WHITELIST_PASSWORD manquant, voir README}"
+    volumes:
+      - ./whitelist:/app:ro
+
+  # HTTPS devant la page de whitelist (certificat Let's Encrypt automatique pour WEB_HOSTNAME).
+  web:
+    image: caddy:2-alpine
+    container_name: minecraft-web
+    restart: unless-stopped
+    depends_on:
+      - whitelist
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      WEB_HOSTNAME: "${WEB_HOSTNAME:-localhost}"
+    volumes:
+      - ./whitelist/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data            # certificats : à garder, Let's Encrypt limite les demandes
+
   backup:
     image: itzg/mc-backup:latest
     container_name: minecraft-backup
@@ -84,3 +119,6 @@ services:
     volumes:
       - ./data:/data:ro
       - ./backups:/backups
+
+volumes:
+  caddy_data:

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whitelist</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #1b1b1f; color: #eee; display: flex; justify-content: center; margin: 0; padding: 2rem 1rem; }
+  main { width: 100%; max-width: 22rem; }
+  label { display: block; margin-top: 1rem; font-size: .9rem; }
+  input, button { width: 100%; box-sizing: border-box; margin-top: .3rem; padding: .6rem; font-size: 1rem; border-radius: 6px; border: 1px solid #555; background: #2a2a30; color: inherit; }
+  button { background: #3b8f3b; border: 0; cursor: pointer; margin-top: 1.5rem; }
+  button:disabled { opacity: .5; cursor: wait; }
+  #out { margin-top: 1rem; min-height: 1.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Whitelist</h1>
+  <form id="form">
+    <label>Mot de passe
+      <input id="password" type="password" autocomplete="off" required>
+    </label>
+    <label>Pseudo Minecraft (Java)
+      <input id="name" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" required>
+    </label>
+    <button id="send">Ajouter</button>
+  </form>
+  <p id="out"></p>
+</main>
+<script>
+  const form = document.getElementById("form");
+  const out = document.getElementById("out");
+  const send = document.getElementById("send");
+  const password = document.getElementById("password");
+  const pseudo = document.getElementById("name");
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    send.disabled = true;
+    out.textContent = "…";
+    try {
+      const response = await fetch("/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: password.value, name: pseudo.value.trim() }),
+      });
+      out.textContent = (await response.json()).message;
+    } catch (error) {
+      out.textContent = "Erreur réseau.";
+    }
+    send.disabled = false;
+  });
+</script>
+</body>
+</html>

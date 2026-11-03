@@ -44,6 +44,15 @@
     port: "{{ mc_port }}"
     proto: tcp
 
+- name: Pare-feu - autoriser HTTP et HTTPS (page de whitelist)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "443"
+
 - name: Pare-feu - activer
   community.general.ufw:
     state: enabled

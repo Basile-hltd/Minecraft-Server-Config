@@ -20,11 +20,12 @@
     path: "{{ mc_dir }}/.env"
   register: mc_env_stat
 
-- name: Générer .env (mot de passe RCON aléatoire, créé une seule fois sur la machine)
+- name: Générer .env (mots de passe RCON et whitelist aléatoires, créé une seule fois sur la machine)
   ansible.builtin.copy:
     dest: "{{ mc_dir }}/.env"
     content: |
       RCON_PASSWORD={{ lookup('ansible.builtin.password', '/dev/null length=32 chars=ascii_letters,digits') }}
+      WHITELIST_PASSWORD={{ lookup('ansible.builtin.password', '/dev/null length=12 chars=ascii_letters,digits') }}
     owner: "{{ mc_user }}"
     group: "{{ mc_user }}"
     mode: "0600"
@@ -42,6 +43,20 @@
     - { key: ISOHYPSE_VERSION, value: "{{ isohypse_version }}" }
     - { key: LSS_VERSION, value: "{{ lss_version }}" }
     - { key: OREBFUSCATOR_VERSION, value: "{{ orebfuscator_version }}" }
+    - { key: WEB_HOSTNAME, value: "{{ web_hostname }}" }
+
+- name: Lire .env
+  ansible.builtin.slurp:
+    src: "{{ mc_dir }}/.env"
+  register: mc_env
+  when: not ansible_check_mode
+
+- name: Ajouter le mot de passe de la whitelist s'il manque (jamais regénéré s'il existe)
+  ansible.builtin.lineinfile:
+    path: "{{ mc_dir }}/.env"
+    line: "WHITELIST_PASSWORD={{ lookup('ansible.builtin.password', '/dev/null length=12 chars=ascii_letters,digits') }}"
+  when: not ansible_check_mode and (mc_env.content | b64decode) is not search('(?m)^WHITELIST_PASSWORD=')
+  no_log: true
 
 - name: Synchroniser le dossier config/
   ansible.posix.synchronize:
@@ -52,6 +67,15 @@
     rsync_opts:
       - "--chown={{ mc_user }}:{{ mc_user }}"
       - "--exclude=.gitkeep"
+
+- name: Synchroniser la page de whitelist (whitelist/)
+  ansible.posix.synchronize:
+    src: "{{ playbook_dir }}/../server/whitelist/"
+    dest: "{{ mc_dir }}/whitelist/"
+    recursive: true
+    delete: true
+    rsync_opts:
+      - "--chown={{ mc_user }}:{{ mc_user }}"
 
 - name: Créer les dossiers de données et de sauvegardes
   ansible.builtin.file:
@@ -69,3 +93,15 @@
     project_src: "{{ mc_dir }}"
     state: present
     pull: missing
+
+- name: Relire .env
+  ansible.builtin.slurp:
+    src: "{{ mc_dir }}/.env"
+  register: mc_env_final
+  when: not ansible_check_mode
+
+- name: Mot de passe de la page de whitelist
+  ansible.builtin.debug:
+    msg: >-
+      https://{{ web_hostname }} - mot de passe : {{ (mc_env_final.content | b64decode) | regex_search('(?m)^WHITELIST_PASSWORD=(.*)$', '\1') | first }}
+  when: not ansible_check_mode
