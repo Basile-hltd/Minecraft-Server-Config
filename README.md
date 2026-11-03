@@ -72,7 +72,7 @@ Les versions se changent à **un seul endroit** : `ansible/group_vars/all.yml`.
 
 ```yaml
 mc_version: "26.3"          # version de Minecraft/Paper du serveur
-isohypse_version: "0.2.0"   # plugin Isohypse (tag v... sur Basile-hltd/Minecraft-isohypse)
+isohypse_version: "0.2.2"   # plugin Isohypse (tag v... sur Basile-hltd/Minecraft-isohypse)
 lss_version: "0.20.0"       # plugin LOD Server Support (Modrinth)
 ```
 
@@ -104,7 +104,7 @@ faite à la main sur le serveur est perdue au redémarrage suivant.
 | `server/config/plugins/LodServerSupport/lss-server-config.yaml` | Distance des LOD, génération, bande passante, disque, confidentialité. Fichier complet, commenté par le plugin |
 | `LEVEL_TYPE` dans `server/docker-compose.yml` | Style de génération d'Isohypse : `Vanilla+`, `Realistic` ou `Fairy` |
 
-Les valeurs de départ viennent de `tools/server/` du dépôt Isohypse (v0.2.0) : `config.yml` tel quel,
+Les valeurs de départ viennent de `tools/server/` du dépôt Isohypse (v0.2.2) : `config.yml` tel quel,
 `lss.yml` appliqué au fichier par défaut de LSS 0.20.0 (`reader_threads` et `max_concurrent_reads` à 8),
 et `level-type=Realistic` de son `server.properties` (ses autres clés sont propres au serveur de test).
 
@@ -200,7 +200,7 @@ Les sauvegardes sont dans `/opt/minecraft/backups` (toutes les 6 h, 7 jours cons
 
 ```bash
 cd server
-printf 'MC_VERSION=26.3\nMC_LINE=26.3\nISOHYPSE_VERSION=0.2.0\nLSS_VERSION=0.20.0\n' > .env   # mêmes valeurs que group_vars/all.yml
+printf 'MC_VERSION=26.3\nMC_LINE=26.3\nISOHYPSE_VERSION=0.2.2\nLSS_VERSION=0.20.0\n' > .env   # mêmes valeurs que group_vars/all.yml
 docker compose up -d mc       # seulement le serveur, sans le service de sauvegarde
 docker compose logs -f mc     # attendre "Done", puis se connecter sur localhost
 docker compose down

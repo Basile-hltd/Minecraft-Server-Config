@@ -12,7 +12,7 @@ mc_dir: /opt/minecraft
 # LOD Server Support d'après la version exacte (version Modrinth v<lss_version>+paper+mc<mc_version>).
 mc_version: "26.3"
 # Version du plugin Isohypse (tag de release de Basile-hltd/Minecraft-isohypse, sans le "v").
-isohypse_version: "0.2.0"
+isohypse_version: "0.2.2"
 # Version du plugin LOD Server Support (https://modrinth.com/plugin/lod-server-support, sans le "v").
 lss_version: "0.20.0"
 # Dérivé de mc_version : ne pas modifier.
